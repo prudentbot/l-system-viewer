@@ -1,0 +1,19 @@
+{
+  "name": "l-systems",
+  "version": "0.0.0",
+  "authors": [
+    "Tyler Smith <tylsmith@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "svg-pan-zoom": "~3.2.8"
+  }
+}
