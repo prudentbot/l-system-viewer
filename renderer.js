@@ -1,38 +1,79 @@
 
 //shut door and light
+var container;
 
 var go = function(){
   console.log("init")
-  var panZoom = svgPanZoom('#l-system-view', {minZoom: .5, maxZoom: 10});
 
-  var symbols = "f-h - f+h - f-h + f+h - f-h - f+h + f-h + f+h"
-  var t = new Turtle()
-  var pathstring = t.startPath();
+  var width = 600;
+  var height = 600;
+  var margin = {top: -5, right: -5, bottom: -5, left: -5}
+
+  var zoom = d3.behavior.zoom()
+    .scaleExtent([1, 10])
+    .on("zoom", zoomed);
+
+  var drag = d3.behavior.drag()
+      .origin(function(d) { return d; })
+      .on("dragstart", dragstarted)
+      .on("drag", dragged)
+      .on("dragend", dragended);
+
+  var svg = d3.select("#l-system-view")
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
+    .call(zoom);
+
+  var rect = svg.append("rect")
+    .attr("width", width)
+    .attr("height", height)
+    .style("fill", "none")
+    .style("pointer-events", "all");
+
+  container = svg.append("g");
+  var symbols = "f-h - f+h - f-h + f+h - f-h - f+h + f-h + f+h";
+
+  var t = new Turtle(container);
   for(var i = 0; i < symbols.length; ++i){
-    pathstring = t.changeStateAndDraw(pathstring, symbols[i])
-    console.log(pathstring);
+    t.changeStateAndDraw(symbols[i])
   }
-  console.log(pathstring);
+  // var panZoom = svgPanZoom('#l-system-view', {minZoom: .5, maxZoom: 10});
+  console.log(container);
+
+  console.log(createGrammar(["X=X+YF+", "Y=-FX-Y"]))
+}
+
+
+var translateColor = function(color){
+  if (color == "a")
+    return "black";
+}
+//takes an array of production rules
+var createGrammar = function(a){
+  var result = {};
+  for(var i = 0; i < a.length; ++i){
+    result[a[i][0]] = a[i].substring(2);
+  }
+  return result;
 }
 
 //http://www.cs.unm.edu/~joel/PaperFoldingFractal/L-system-rules.html
-var d = 5; //step size
+var d = 10; //step size
 var b = .25; //angle increment, 1 would be 2pi
 
 var Turtle = class {
-  constructor (){
+  constructor (linegroup){
     this.state = new State(100, 50, 0, "a");
     this.stack = [];
     this.top = 0;
+    this.linegroup = linegroup;
   }
 
   startPath (){
     return "M" + this.state.x + " " + this.state.y
   }
 
-  changeStateAndDraw (pathstring, symbol) {
-    console.log(symbol);
-    console.log(pathstring);
+  changeStateAndDraw (symbol) {
     if(symbol == "f" || symbol == "h"){
       var newState = new State(
         this.state.x + (d * Math.sin(2 * Math.PI * this.state.a)),
@@ -40,8 +81,14 @@ var Turtle = class {
         this.state.a,
         this.state.c
       )
+      this.linegroup.append("line")
+        .attr("x1", this.state.x)
+        .attr("y1", this.state.y)
+        .attr("x2", newState.x)
+        .attr("y2", newState.y)
+        .attr("stroke", translateColor(this.state.c))
+        .attr("stroke-width", "2")
       this.state = newState;
-      pathstring = pathstring + " L" + newState.x + " " + newState.y;
     }
     else if (symbol == "g"){
       var newState = new State(
@@ -50,8 +97,14 @@ var Turtle = class {
         this.state.a,
         this.state.c
       )
+      this.linegroup.append("line")
+        .attr("x1", this.state.x)
+        .attr("y1", this.state.y)
+        .attr("x2", newState.x)
+        .attr("y2", newState.y)
+        .attr("stroke", translateColor(this.state.c))
+        .attr("stroke-width", "2")
       this.state = newState;
-      pathstring = pathstring + " M" + newState.x + " " + newState.y;
     }
     else if (symbol == "+") {
       var newState = new State(this.state.x, this.state.y, this.state.a + b, this.state.c)
@@ -73,7 +126,6 @@ var Turtle = class {
       var newState = new State(this.state.x, this.state.y, this.state.a, symbol);
       this.state = newState;
     }
-    return pathstring;
   }
 }
 
@@ -85,4 +137,21 @@ var State = class {
     this.a = a;
     this.c = c;
   }
+}
+
+function zoomed() {
+  container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+}
+
+function dragstarted(d) {
+  d3.event.sourceEvent.stopPropagation();
+  d3.select(this).classed("dragging", true);
+}
+
+function dragged(d) {
+  d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+}
+
+function dragended(d) {
+  d3.select(this).classed("dragging", false);
 }
