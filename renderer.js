@@ -1,58 +1,32 @@
-
-//shut door and light
-var container;
-
-var go = function(){
-  console.log("init")
-
-  var width = 600;
-  var height = 600;
-  var margin = {top: -5, right: -5, bottom: -5, left: -5}
-
-  var zoom = d3.behavior.zoom()
-    .scaleExtent([1, 10])
-    .on("zoom", zoomed);
-
-  var drag = d3.behavior.drag()
-      .origin(function(d) { return d; })
-      .on("dragstart", dragstarted)
-      .on("drag", dragged)
-      .on("dragend", dragended);
-
-  var svg = d3.select("#l-system-view")
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
-    .call(zoom);
-
-  var rect = svg.append("rect")
-    .attr("width", width)
-    .attr("height", height)
-    .style("fill", "none")
-    .style("pointer-events", "all");
-
-  container = svg.append("g");
-  var symbols = "f-h - f+h - f-h + f+h - f-h - f+h + f-h + f+h";
-
-  var t = new Turtle(container);
-  for(var i = 0; i < symbols.length; ++i){
-    t.changeStateAndDraw(symbols[i])
-  }
-  // var panZoom = svgPanZoom('#l-system-view', {minZoom: .5, maxZoom: 10});
-  console.log(container);
-
-  console.log(createGrammar(["X=X+YF+", "Y=-FX-Y"]))
-}
-
-
 var translateColor = function(color){
   if (color == "a")
     return "black";
 }
+
 //takes an array of production rules
 var createGrammar = function(a){
   var result = {};
   for(var i = 0; i < a.length; ++i){
     result[a[i][0]] = a[i].substring(2);
+  }
+  return result;
+}
+
+var applyRules = function(str, grammar){
+  var result = "";
+  for(var i = 0; i < str.length; ++i){
+    if(grammar[str[i]]){
+      result = result + grammar[str[i]];
+    }
+    else if(str[i] == "("){
+      var rightIndex = str.indexOf(")", i);
+      var num = Number(str.substring(i+1, rightIndex));
+      result = result + "(" + (num + 1) + ")";
+      i = rightIndex;
+    }
+    else{
+      result = result + str[i];
+    }
   }
   return result;
 }
@@ -63,14 +37,10 @@ var b = .25; //angle increment, 1 would be 2pi
 
 var Turtle = class {
   constructor (linegroup){
-    this.state = new State(100, 50, 0, "a");
+    this.state = new State(300, 300, 0, "a");
     this.stack = [];
     this.top = 0;
     this.linegroup = linegroup;
-  }
-
-  startPath (){
-    return "M" + this.state.x + " " + this.state.y
   }
 
   changeStateAndDraw (symbol) {
@@ -138,6 +108,62 @@ var State = class {
     this.c = c;
   }
 }
+
+var dragonsymbols = "f";
+var dragongrammar = createGrammar(["f=f-h", "h=f+h"]);
+
+var symbols = dragonsymbols;
+var g = dragongrammar
+var t;
+
+var go = function(){
+
+  console.log("executed!");
+  //shut door and light
+  var width = 600;
+  var height = 600;
+  var margin = {top: -5, right: -5, bottom: -5, left: -5}
+
+  var zoom = d3.behavior.zoom()
+    .scaleExtent([.1, 10])
+    .on("zoom", zoomed);
+
+  var drag = d3.behavior.drag()
+    .origin(function(d) { return d; })
+    .on("dragstart", dragstarted)
+    .on("drag", dragged)
+    .on("dragend", dragended);
+
+  var svg = d3.select("#l-system-view")
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
+    .call(zoom);
+
+  var rect = svg.append("rect")
+    .attr("width", width)
+    .attr("height", height)
+    .style("fill", "none")
+    .style("pointer-events", "all");
+
+  container = svg.append("g");
+}
+
+var step = function(){
+
+  container.selectAll("*").remove();
+  t = new Turtle(container);
+
+  symbols = applyRules(symbols, g)
+  for(var i = 0; i < symbols.length; ++i){
+    t.changeStateAndDraw(symbols[i])
+
+    if (symbols[i] == "("){
+      i = str.indexOf(")", i);
+    }
+  }
+  console.log(symbols);
+}
+
 
 function zoomed() {
   container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
