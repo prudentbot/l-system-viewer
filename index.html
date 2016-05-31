@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<head>
-  <!-- <script src="public/components/svg-pan-zoom/dist/svg-pan-zoom.js"></script> -->
-  <script src="https://d3js.org/d3.v3.min.js"></script>
-  <script src="renderer.js"></script>
-</head>
-<body >
-  <svg id="l-system-view" width="600" height="600" onload="go()">
-  </svg>
-  <button id="step" onclick="step()">step!</button>
-</body>
+<html ng-app="l-system-app">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="renderer.js"></script>
+  </head>
+  <body ng-controller="loaderController as loader">
+    <select ng-model="loader.picker" ng-change="loader.changeLoaded()">
+      <option selected="selected" value="dragon-curve">Dragon Curve</option>
+      <option value="plant-1">Plant 1</option>
+    </select>
+    <svg id="l-system-view" width="600" height="600" onload="go()" style="border: 1px solid black;">
+    </svg>
+    <button id="step" onclick="step()">step!</button>
+  </body>
+</html>

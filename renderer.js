@@ -1,6 +1,28 @@
+angular.module('l-system-app', [])
+  .controller('loaderController', function(){
+    var loader = this;
+
+    loaded = presets["dragon-curve"];
+    symbols = loaded.axiom;
+    grammar = createGrammar(loaded.grammar);
+
+    loader.changeLoaded = function(){
+      loaded = presets[this.picker]
+      symbols = loaded.axiom;
+      grammar = createGrammar(loaded.grammar);
+    }
+  });
+
+
 var translateColor = function(color){
   if (color == "a")
     return "black";
+  if (color == "b")
+    return "#802b00"
+  if (color == "c")
+    return "#00b300"
+  if (color == "d")
+    return "#008000"
 }
 
 //takes an array of production rules
@@ -37,7 +59,8 @@ var b = .25; //angle increment, 1 would be 2pi
 
 var Turtle = class {
   constructor (linegroup){
-    this.state = new State(300, 300, 0, "a");
+    //x, y, angle, color
+    this.state = new State(300, 300, .5, "a");
     this.stack = [];
     this.top = 0;
     this.linegroup = linegroup;
@@ -46,8 +69,8 @@ var Turtle = class {
   changeStateAndDraw (symbol) {
     if(symbol == "f" || symbol == "h"){
       var newState = new State(
-        this.state.x + (d * Math.sin(2 * Math.PI * this.state.a)),
-        this.state.y + (d * Math.cos(2 * Math.PI * this.state.a)),
+        this.state.x + (loaded.stepSize * Math.sin(2 * Math.PI * this.state.a)),
+        this.state.y + (loaded.stepSize * Math.cos(2 * Math.PI * this.state.a)),
         this.state.a,
         this.state.c
       )
@@ -62,8 +85,8 @@ var Turtle = class {
     }
     else if (symbol == "g"){
       var newState = new State(
-        this.state.x + (d * Math.sin(2 * Math.PI * this.state.a)),
-        this.state.y + (d * Math.cos(2 * Math.PI * this.state.a)),
+        this.state.x + (loaded.stepSize * Math.sin(2 * Math.PI * this.state.a)),
+        this.state.y + (loaded.stepSize * Math.cos(2 * Math.PI * this.state.a)),
         this.state.a,
         this.state.c
       )
@@ -77,11 +100,11 @@ var Turtle = class {
       this.state = newState;
     }
     else if (symbol == "+") {
-      var newState = new State(this.state.x, this.state.y, this.state.a + b, this.state.c)
+      var newState = new State(this.state.x, this.state.y, this.state.a + loaded.angleIncrement, this.state.c)
       this.state = newState;
     }
     else if (symbol == "-") {
-      var newState = new State(this.state.x, this.state.y, this.state.a - b, this.state.c)
+      var newState = new State(this.state.x, this.state.y, this.state.a - loaded.angleIncrement, this.state.c)
       this.state = newState;
     }
     else if (symbol == "["){
@@ -109,12 +132,24 @@ var State = class {
   }
 }
 
-var dragonsymbols = "f";
-var dragongrammar = createGrammar(["f=f-h", "h=f+h"]);
+var presets = {
+  "dragon-curve":{
+    axiom:"f",
+    grammar:["f=f-h", "h=f+h"],
+    stepSize:10,
+    angleIncrement:.25
+  },
+  "plant-1":{
+    axiom:"f",
+    grammar:["f=bff-[c-f+f+f]+[d+f-f-f]"],
+    stepSize:10,
+    angleIncrement:.06
+  }
+}
+var loaded = presets["dragon-curve"];
 
-var symbols = dragonsymbols;
-var g = dragongrammar
-var t;
+var symbols;
+var grammar;
 
 var go = function(){
 
@@ -151,14 +186,14 @@ var go = function(){
 var step = function(){
 
   container.selectAll("*").remove();
-  t = new Turtle(container);
+  var t = new Turtle(container);
 
-  symbols = applyRules(symbols, g)
+  symbols = applyRules(symbols, grammar)
   for(var i = 0; i < symbols.length; ++i){
     t.changeStateAndDraw(symbols[i])
 
     if (symbols[i] == "("){
-      i = str.indexOf(")", i);
+      i = symbols.indexOf(")", i);
     }
   }
   console.log(symbols);
